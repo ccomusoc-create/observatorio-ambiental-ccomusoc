@@ -1,0 +1,35 @@
+name: Observatorio Ambiental Automático
+
+on:
+  schedule:
+    - cron: "0 12 * * *" # todos los días a las 12 UTC
+  workflow_dispatch:
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Instalar dependencias
+        run: pip install feedparser pandas matplotlib
+
+      - name: Ejecutar scraper base de datos
+        run: python scraper/ambiental_db.py
+
+      - name: Actualizar CSV para la web
+        run: python scraper/ambiental_web.py
+
+      - name: Commit y push
+        run: |
+          git config --global user.email "bot@github.com"
+          git config --global user.name "GitHub Actions Bot"
+          git add data/ambiental.csv charts/picos.png
+          git commit -m "Actualización automática de noticias y gráfico 🌱" || echo "No hay cambios"
+          git push
